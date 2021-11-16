@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    {% for post in posts %}
+        <br>
+        <h1>{{ post.title }}</h1>
+        <p>Posted on {{ post.timestamp }}</p>
+        <p>{{ post.content }}</p>
+    {% endfor %}
+
+{% endblock content %}
