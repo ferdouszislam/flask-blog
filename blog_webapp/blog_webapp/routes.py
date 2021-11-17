@@ -172,3 +172,10 @@ def create_post():
         return redirect(url_for('home'))
 
     return render_template('create_post.html', title='Create Post', form=form)
+
+
+@app.route("/post/<int:post_id>")
+def get_post(post_id):
+    # get_or_404() signals 404 Not Found in the browser automatically if data does not exist
+    post = Post.query.get_or_404(post_id)
+    return render_template('post.html', title=post.title, post=post)
