@@ -1,3 +1,6 @@
+import os
+import secrets
+from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from blog_webapp import app, db, bcrypt
 from blog_webapp.forms import RegistrationForm, LoginForm, UpdateProfileForm
@@ -70,11 +73,49 @@ def logout():
     return redirect(url_for('home'))
 
 
+def update_user_profile_picture(current_profile_image_file, form_image):
+    """
+    save profile picture inside static/profile_pictures
+    :param current_profile_image_file: name of current profile image
+    :param form_image: image input from form
+    :return: saved profile picture unique filename
+    """
+
+    # delete profile picture if exists
+    curr_profile_image_path = os.path.join(app.root_path,
+                                           f'static/profile_pics/{current_profile_image_file}')
+    if os.path.exists(curr_profile_image_path) \
+            and current_profile_image_file != 'default_profile_image.png':
+        os.remove(curr_profile_image_path)
+
+    # create unique image file name
+    rand_str = secrets.token_hex(8)  # 8 byte hex code
+    _, file_ext = os.path.splitext(form_image.filename)  # get the uploaded file extension
+    profile_picture_filename = rand_str + file_ext
+    profile_picture_path = os.path.join(app.root_path,
+                                        f'static/profile_pics',
+                                        profile_picture_filename)
+    # resize image 125x125
+    resize_img_size = (125, 125)
+    form_image = Image.open(form_image)
+    form_image.thumbnail(resize_img_size)
+
+    # save image
+    form_image.save(profile_picture_path)
+
+    return profile_picture_filename
+
+
 @app.route("/profile", methods=['GET', 'POST'])
 @login_required  # don't let user navigate to this page if logged out
 def profile():
     form = UpdateProfileForm()
     if form.validate_on_submit():
+        if form.profile_picture.data:
+            profile_image_file = update_user_profile_picture(current_user.profile_image_file,
+                                                             form.profile_picture.data)
+            current_user.profile_image_file = profile_image_file
+
         # update user in db
         current_user.username = form.username.data
         current_user.email = form.email.data

@@ -2,7 +2,6 @@
 
 {% block content %}
 
-
         <div class="media">
             <img class="rounded-circle account-img" alt="profile photo" src="{{ profile_image_file }}">
             <div class="media-body">
@@ -12,7 +11,7 @@
         </div>
 
          <div class="content-section">
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
 
             <!-- needed for security using secret_key -->
             {{ form.hidden_tag() }}
@@ -51,6 +50,19 @@
                     {% endif %}
 
                 </div>
+
+                <div class="form-group">
+                    {{ form.profile_picture.label() }}
+                    {{ form.profile_picture(class="form-control-file") }}
+
+                    {% if form.profile_picture.errors %}
+                        {% for error in form.profile_picture.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            </br>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
             </fieldset>
 
             <div class="form-group">
