@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
     # string length 20 for hashing image files,
     # so that file names are unique
     profile_image_file = db.Column(db.String(20), nullable=False,
-                                   default='default_profile_image.jpg')
+                                   default='default_profile_image.png')
     # string length 60 for hashing
     password = db.Column(db.String(60), nullable=False)
 

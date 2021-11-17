@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 from blog_webapp import app, db, bcrypt
-from blog_webapp.forms import RegistrationForm, LoginForm
+from blog_webapp.forms import RegistrationForm, LoginForm, UpdateProfileForm
 from blog_webapp.utils import dummy_data
 from blog_webapp.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
@@ -70,7 +70,30 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route("/profile")
+@app.route("/profile", methods=['GET', 'POST'])
 @login_required  # don't let user navigate to this page if logged out
 def profile():
-    return render_template('profile.html', title='User Profile')
+    form = UpdateProfileForm()
+    if form.validate_on_submit():
+        # update user in db
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+
+        # let user know
+        flash('Profile updated!', 'success')
+
+        # don't let it fall to the return at the end
+        # redirect makes a GET request
+        # but the last return makes a POST request making a form resubmit
+        return redirect(url_for('profile'))
+
+    elif request.method == 'GET':
+        # GET request means user navigated to this page and did not just submit form
+        # populate the form with existing user data
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+
+    profile_image_file = url_for('static', filename=f'profile_pics/{current_user.profile_image_file}')
+    return render_template('profile.html', title='User Profile',
+                           profile_image_file=profile_image_file, form=form)
