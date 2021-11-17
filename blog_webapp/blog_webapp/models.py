@@ -1,8 +1,16 @@
 from datetime import datetime
-from blog_webapp import db
+from blog_webapp import db, login_manager
+from flask_login import UserMixin
 
 
-class User(db.Model):
+# for login manager to fetch user info using user_id from session
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+# UserMixin is needed for the flask_login library's built-in login authentication
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
