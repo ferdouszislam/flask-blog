@@ -3,7 +3,7 @@ import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from blog_webapp import app, db, bcrypt
-from blog_webapp.forms import RegistrationForm, LoginForm, UpdateProfileForm
+from blog_webapp.forms import RegistrationForm, LoginForm, UpdateProfileForm, PostForm
 from blog_webapp.utils import dummy_data
 from blog_webapp.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
@@ -12,10 +12,8 @@ from flask_login import login_user, current_user, logout_user, login_required
 @app.route('/')
 @app.route('/home')
 def home():
-    return render_template('home.html', posts=dummy_data.posts)
-# def hello():
-#     name = request.args.get("name", "World")
-#     return f'Hello, {escape(name)}!'
+    posts = Post.query.all()
+    return render_template('home.html', posts=posts)
 
 
 @app.route('/about')
@@ -150,3 +148,27 @@ def profile():
     profile_image_file = url_for('static', filename=f'profile_pics/{current_user.profile_image_file}')
     return render_template('profile.html', title='User Profile',
                            profile_image_file=profile_image_file, form=form)
+
+
+@app.route("/post/create", methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostForm()
+    if form.validate_on_submit():
+
+        post = Post(title=form.title.data, content=form.content.data,
+                    author=current_user)
+
+        # save the post to database
+        db.session.add(post)
+        db.session.commit()
+
+        # let the user know
+        flash('Your post was uploaded!', 'success')
+
+        # don't let it fall to the return at the end
+        # redirect makes a GET request
+        # but the last return makes a POST request making a form resubmit
+        return redirect(url_for('home'))
+
+    return render_template('create_post.html', title='Create Post', form=form)
