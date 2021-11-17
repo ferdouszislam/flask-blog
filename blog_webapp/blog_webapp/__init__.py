@@ -19,6 +19,9 @@ bcrypt = Bcrypt(app)
 
 # manage login
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'  # login page route
+login_manager.login_message_category = 'info'  # 'info' is a bootstrap class
+login_manager.login_message = 'Please login to view this page'
 
 # need to import routes after initializing 'app'
 # because route also imports 'app' from here

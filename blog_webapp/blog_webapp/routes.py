@@ -1,9 +1,9 @@
-from flask import render_template, url_for, flash, redirect
+from flask import render_template, url_for, flash, redirect, request
 from blog_webapp import app, db, bcrypt
 from blog_webapp.forms import RegistrationForm, LoginForm
 from blog_webapp.utils import dummy_data
 from blog_webapp.models import User, Post
-from flask_login import login_user, current_user, logout_user
+from flask_login import login_user, current_user, logout_user, login_required
 
 
 @app.route('/')
@@ -50,7 +50,14 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect(url_for('home'))
+
+            # login_manager hits '/login' route with a parameter of next_page
+            # next_page is the route user tried to access without logging in
+            # next_page will be None if /login route is hit anything else but the login_manager
+            next_page = request.args.get('next', None)
+
+            return redirect(next_page) if next_page else redirect(url_for('home'))
+
         else:
             flash(f'Sorry user does not exist, please check your email and password.', 'danger')
 
@@ -61,3 +68,9 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+
+@app.route("/profile")
+@login_required  # don't let user navigate to this page if logged out
+def profile():
+    return render_template('profile.html', title='User Profile')
