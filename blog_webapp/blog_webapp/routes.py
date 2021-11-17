@@ -111,18 +111,30 @@ def update_user_profile_picture(current_profile_image_file, form_image):
 def profile():
     form = UpdateProfileForm()
     if form.validate_on_submit():
+        info_updated = False
+
         if form.profile_picture.data:
             profile_image_file = update_user_profile_picture(current_user.profile_image_file,
                                                              form.profile_picture.data)
             current_user.profile_image_file = profile_image_file
+            info_updated = True
 
-        # update user in db
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
+        if form.username.data != current_user.username:
+            current_user.username = form.username.data
+            info_updated = True
+
+        if form.email.data != current_user.email:
+            current_user.email = form.email.data
+            info_updated = True
+
+        if info_updated:
+            db.session.commit()  # update user in db
 
         # let user know
-        flash('Profile updated!', 'success')
+        if info_updated:
+            flash('Profile updated!', 'success')
+        else:
+            flash("You didn't update anything.", 'info')
 
         # don't let it fall to the return at the end
         # redirect makes a GET request
