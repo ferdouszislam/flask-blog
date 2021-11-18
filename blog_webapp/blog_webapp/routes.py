@@ -249,3 +249,21 @@ def delete_post(post_id):
     flash('The post was deleted!', 'success')
 
     return redirect(url_for('home'))
+
+
+@app.route('/user/<string:username>/posts', methods=['GET'])
+def get_user_posts(username):
+    curr_page_num = request.args.get('page_num', 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts_paginated = Post.query\
+        .filter_by(author=user)\
+        .order_by(Post.timestamp.desc())\
+        .paginate(page=curr_page_num, per_page=5)
+
+    # get the list of posts according to pagination parameters
+    posts = [post for post in posts_paginated.items]
+    all_page_nums = [page_num for page_num in posts_paginated.iter_pages(left_edge=1,
+                                                                         left_current=1, right_current=2,
+                                                                         right_edge=1)]
+
+    return render_template('user_posts.html', posts=posts, curr_page_num=curr_page_num, all_page_nums=all_page_nums, user=user)
