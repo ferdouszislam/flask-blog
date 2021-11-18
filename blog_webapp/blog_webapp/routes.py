@@ -14,7 +14,7 @@ def home():
     # get the pagination page number from query parameter
     curr_page_num = request.args.get('page_num', 1, type=int)
     # pagination and query to get latest post first
-    posts_paginated = Post.query.paginate(page=curr_page_num, per_page=5)
+    posts_paginated = Post.query.order_by(Post.timestamp.desc()).paginate(page=curr_page_num, per_page=5)
 
     # get the list of posts according to pagination parameters
     posts = [post for post in posts_paginated.items]
