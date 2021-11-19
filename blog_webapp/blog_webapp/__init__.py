@@ -21,7 +21,7 @@ bcrypt = Bcrypt(app)
 
 # manage login
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'  # login page route
+login_manager.login_view = 'users.login'  # login page route
 login_manager.login_message_category = 'info'  # 'info' is a bootstrap class
 login_manager.login_message = 'Please login to view this page'
 
@@ -34,6 +34,13 @@ app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD')
 mail = Mail(app)
 # print(app.config['MAIL_PASSWORD'])
 
+# need to register routes in here
 # need to import routes after initializing 'app'
 # because route also imports 'app' from here
-from blog_webapp import routes
+from blog_webapp.main.routes import main
+from blog_webapp.users.routes import users
+from blog_webapp.posts.routes import posts
+
+app.register_blueprint(main)
+app.register_blueprint(users)
+app.register_blueprint(posts)
