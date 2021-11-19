@@ -2,11 +2,14 @@ import os
 import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
-from blog_webapp import app, db, bcrypt
-from blog_webapp.forms import RegistrationForm, LoginForm, UpdateProfileForm, PostForm
-from blog_webapp.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
 
+from blog_webapp import app, db, bcrypt, mail
+from blog_webapp.forms import (RegistrationForm, LoginForm, UpdateProfileForm, PostForm,
+                               RequestResetPasswordForm, ResetPasswordForm)
+from blog_webapp.models import User, Post
+from blog_webapp.utils.onetime_token_util import get_onetime_token, get_data_from_onetime_token
+from flask_mail import Message
 
 @app.route('/')
 @app.route('/home')
@@ -267,3 +270,70 @@ def get_user_posts(username):
                                                                          right_edge=1)]
 
     return render_template('user_posts.html', posts=posts, curr_page_num=curr_page_num, all_page_nums=all_page_nums, user=user)
+
+
+def send_reset_password_email_to_user(user):
+    token = get_onetime_token({'user_id': user.id})
+    email_msg = Message('Password Reset Request',
+                        sender='noreply@demo.com',
+                        recipients=[user.email])
+    email_msg.body = f'''To reset your password click on the link below:
+{url_for('reset_password', token=token, _external=True)}
+    
+If you did not make this request please ignore this email. Thank you.
+    '''
+
+    # send the email
+    mail.send(email_msg)
+
+
+@app.route("/request_reset_password", methods=['GET', 'POST'])
+def request_reset_password():
+    # if user is logged in direct to homepage
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    form = RequestResetPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        # try-catch in case sending email fails
+        try:
+            send_reset_password_email_to_user(user)
+            flash(f'Please check your email ({user.email}) to reset password.', 'info')
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            flash(f'Failed to send reset password email, please try again.', 'danger')
+            print(f'sending password reset email failed: {str(e)}')
+            return redirect(url_for('request_reset_password'))
+
+    return render_template('request_reset_password.html', title='Request Reset Password', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_password(token):
+    # if user is logged in direct to homepage
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    # get user_id from the token and check if user exists
+    user_id = get_data_from_onetime_token(token, 'user_id')
+    user = User.query.get(user_id)
+    if not user:
+        flash('Token has expired or is invalid', 'warning')
+        # invalid token used redirect to request reset password page
+        return redirect(url_for('request_reset_password'))
+
+    # token was valid show user password reset form
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        # hash the password
+        password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        # save the new password to database
+        user.password = password
+        db.session.commit()
+
+        flash(f'Password reset successfully! You can now log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', title='Reset Password', form=form)
