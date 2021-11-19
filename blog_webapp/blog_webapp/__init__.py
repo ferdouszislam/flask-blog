@@ -6,33 +6,37 @@ from flask_mail import Mail
 
 from blog_webapp.config import Config
 
+db = SQLAlchemy()  # sql-alchemy database
 
-app = Flask(__name__)
+bcrypt = Bcrypt()  # for hashing passwords
 
-# set the config variables
-app.config.from_object(Config)
-
-# sql-alchemy database
-db = SQLAlchemy(app)
-
-# for hashing passwords
-bcrypt = Bcrypt(app)
-
-# manage login
-login_manager = LoginManager(app)
+# login managing library vars
+login_manager = LoginManager()
 login_manager.login_view = 'users.login'  # login page route
 login_manager.login_message_category = 'info'  # 'info' is a bootstrap class
 login_manager.login_message = 'Please login to view this page'
 
-mail = Mail(app)
+mail = Mail()  # to send mail
 
-# need to register routes in here
-# need to import routes after initializing 'app'
-# because route also imports 'app' from here
-from blog_webapp.main.routes import main
-from blog_webapp.users.routes import users
-from blog_webapp.posts.routes import posts
 
-app.register_blueprint(main)
-app.register_blueprint(users)
-app.register_blueprint(posts)
+def create_app(config_cls=Config):
+    app = Flask(__name__)
+    app.config.from_object(Config)  # set the config variables
+
+    db.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
+
+    # need to register routes in here
+    # need to import routes after initializing 'app'
+    # because route also imports 'app' from here
+    from blog_webapp.main.routes import main
+    from blog_webapp.users.routes import users
+    from blog_webapp.posts.routes import posts
+
+    app.register_blueprint(main)
+    app.register_blueprint(users)
+    app.register_blueprint(posts)
+
+    return app

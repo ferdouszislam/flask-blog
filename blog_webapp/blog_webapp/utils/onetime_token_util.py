@@ -1,4 +1,4 @@
-from blog_webapp import app
+from flask import current_app
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 
@@ -9,7 +9,7 @@ def get_onetime_token(payload_dict, expire_sec=1800):
     :param expire_sec: token's expiration time in seconds
     :return: token
     """
-    serializer = Serializer(app.config['SECRET_KEY'], expire_sec)
+    serializer = Serializer(current_app.config['SECRET_KEY'], expire_sec)
     return serializer.dumps(payload_dict).decode('utf-8')
 
 
@@ -20,7 +20,7 @@ def get_data_from_onetime_token(token, payload_key):
     :param token: token to be verified
     :return: data saved when creating the token
     """
-    serializer = Serializer(app.config['SECRET_KEY'])
+    serializer = Serializer(current_app.config['SECRET_KEY'])
     try:
         payload_data = serializer.loads(token)[payload_key]
     except Exception as e:

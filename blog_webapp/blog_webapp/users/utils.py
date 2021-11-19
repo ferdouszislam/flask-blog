@@ -1,9 +1,9 @@
 import os
 import secrets
 from PIL import Image
-from flask import url_for
+from flask import current_app, url_for
 
-from blog_webapp import app, mail
+from blog_webapp import mail
 from blog_webapp.utils.onetime_token_util import get_onetime_token, get_data_from_onetime_token
 from flask_mail import Message
 
@@ -17,7 +17,7 @@ def update_user_profile_picture(current_profile_image_file, form_image):
     """
 
     # delete profile picture if exists
-    curr_profile_image_path = os.path.join(app.root_path,
+    curr_profile_image_path = os.path.join(current_app.root_path,
                                            f'static/profile_pics/{current_profile_image_file}')
     if os.path.exists(curr_profile_image_path) \
             and current_profile_image_file != 'default_profile_image.png':
@@ -27,7 +27,7 @@ def update_user_profile_picture(current_profile_image_file, form_image):
     rand_str = secrets.token_hex(8)  # 8 byte hex code
     _, file_ext = os.path.splitext(form_image.filename)  # get the uploaded file extension
     profile_picture_filename = rand_str + file_ext
-    profile_picture_path = os.path.join(app.root_path,
+    profile_picture_path = os.path.join(current_app.root_path,
                                         f'static/profile_pics',
                                         profile_picture_filename)
     # resize image 125x125

@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask import render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user, login_required
 
-from blog_webapp import app, db, bcrypt
+from blog_webapp import db, bcrypt
 from blog_webapp.users.forms import (RegistrationForm, LoginForm, UpdateProfileForm,
                                      RequestResetPasswordForm, ResetPasswordForm)
 from blog_webapp.models import User, Post
@@ -29,7 +29,7 @@ def register():
         db.session.commit()
 
         flash(f'Account created successfully! You can now log in.', 'success')
-        return redirect(url_for('uesrs.login'))
+        return redirect(url_for('users.login'))
 
     return render_template('register.html', title='Register', form=form)
 
